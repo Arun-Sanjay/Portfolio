@@ -6,6 +6,12 @@ Live portfolio for **S Arun Sanjay** — Developer & Builder · B.Tech CS (Cyber
 
 ---
 
+## Preview
+
+![Portfolio preview — loading sequence, hero, and scroll-driven cube choreography](./docs/preview.gif)
+
+---
+
 ## Repository layout
 
 Two builds live side-by-side at the repo root:
