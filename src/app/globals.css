@@ -1,26 +1,324 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: #000000;
+  --color-foreground: #E0E0E0;
+  --color-surface: #0a0a0a;
+  --color-surface-2: #111111;
+  --color-border: rgba(255, 255, 255, 0.06);
+  --color-accent: #00F0FF;
+  --color-accent-2: #FF2D78;
+  --color-accent-gold: #C9A84C;
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains);
+  --font-display: var(--font-playfair);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: auto; background: #000; }
+
+body {
+  background: #000;
+  color: #e0e0e0;
+  font-family: var(--font-jetbrains), monospace;
+  overflow-x: hidden;
+}
+
+::selection { background: rgba(0,240,255,0.15); color: #fff; }
+::-webkit-scrollbar { width: 0; }
+:focus-visible { outline: 2px solid rgba(0,240,255,0.4); outline-offset: 2px; }
+
+/* ══════════════════════════════════════════
+   CYBERPUNK TEXT EFFECTS
+   ══════════════════════════════════════════ */
+
+/* ── Glitch text ── */
+.glitch {
+  position: relative;
+  color: #fff;
+}
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  line-height: inherit;
+  pointer-events: none;
+}
+.glitch::before {
+  color: #00F0FF;
+  z-index: -1;
+  animation: glitchTop 4s infinite;
+  clip-path: polygon(0 0, 100% 0, 100% 40%, 0 40%);
+}
+.glitch::after {
+  color: #FF2D78;
+  z-index: -1;
+  animation: glitchBottom 4s infinite;
+  clip-path: polygon(0 65%, 100% 65%, 100% 100%, 0 100%);
+}
+
+@keyframes glitchTop {
+  0%, 3%, 5%, 100% { transform: translate(0); opacity: 0; }
+  1.5% { transform: translate(3px, -2px); opacity: 0.75; }
+  4% { transform: translate(-3px, 2px); opacity: 0.75; }
+
+  20%, 23%, 25% { transform: translate(0); opacity: 0; }
+  21.5% { transform: translate(-2px, -1px); opacity: 0.6; }
+  24% { transform: translate(2px, 1px); opacity: 0.6; }
+
+  50%, 53%, 55% { transform: translate(0); opacity: 0; }
+  51.5% { transform: translate(3px, -1px); opacity: 0.7; }
+  54% { transform: translate(-3px, 1px); opacity: 0.7; }
+
+  75%, 78%, 80% { transform: translate(0); opacity: 0; }
+  76.5% { transform: translate(-2px, 2px); opacity: 0.5; }
+  79% { transform: translate(2px, -2px); opacity: 0.5; }
+}
+
+@keyframes glitchBottom {
+  0%, 4%, 6%, 100% { transform: translate(0); opacity: 0; }
+  2.5% { transform: translate(-3px, 2px); opacity: 0.75; }
+  5% { transform: translate(3px, -2px); opacity: 0.75; }
+
+  30%, 33%, 35% { transform: translate(0); opacity: 0; }
+  31.5% { transform: translate(2px, 1px); opacity: 0.6; }
+  34% { transform: translate(-2px, -1px); opacity: 0.6; }
+
+  55%, 58%, 60% { transform: translate(0); opacity: 0; }
+  56.5% { transform: translate(-3px, 1px); opacity: 0.7; }
+  59% { transform: translate(3px, -1px); opacity: 0.7; }
+
+  80%, 83%, 85% { transform: translate(0); opacity: 0; }
+  81.5% { transform: translate(2px, -2px); opacity: 0.5; }
+  84% { transform: translate(-2px, 2px); opacity: 0.5; }
+}
+
+/* ── Liquid metal (cyan-tinted cyberpunk) ── */
+.liquid-metal {
+  background: linear-gradient(
+    135deg,
+    #00F0FF 0%,
+    rgba(255,255,255,0.9) 30%,
+    #00F0FF 50%,
+    rgba(255,255,255,0.85) 70%,
+    #00F0FF 100%
+  );
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: metalShimmer 4s ease-in-out infinite;
+}
+
+@keyframes metalShimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ── Neon glow classes ── */
+.neon-cyan {
+  color: #00F0FF;
+  text-shadow: 0 0 7px #00F0FF, 0 0 20px rgba(0,240,255,0.4), 0 0 40px rgba(0,240,255,0.15);
+}
+
+.neon-pink {
+  color: #FF2D78;
+  text-shadow: 0 0 7px #FF2D78, 0 0 20px rgba(255,45,120,0.4), 0 0 40px rgba(255,45,120,0.15);
+}
+
+.text-glow {
+  text-shadow: 0 0 40px rgba(0,240,255,0.06), 0 0 80px rgba(0,240,255,0.03);
+}
+
+/* ══════════════════════════════════════════
+   CYBERPUNK UI ELEMENTS
+   ══════════════════════════════════════════ */
+
+/* ── Glass card (cyberpunk) ── */
+.glass {
+  background: linear-gradient(145deg, rgba(0,240,255,0.03) 0%, rgba(0,0,0,0.3) 50%, rgba(0,240,255,0.02) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(0,240,255,0.08);
+}
+
+/* ── Cyber card with clipped corners ── */
+.cyber-card {
+  position: relative;
+  background: rgba(2, 10, 18, 0.88);
+  border: 1px solid rgba(0, 240, 255, 0.1);
+  padding: 28px;
+  box-shadow:
+    0 0 30px rgba(0, 240, 255, 0.025),
+    inset 0 1px 0 rgba(0, 240, 255, 0.06),
+    inset 0 0 40px rgba(0, 10, 20, 0.4);
+  clip-path: polygon(
+    0 10px, 10px 0, calc(100% - 10px) 0, 100% 10px,
+    100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px)
+  );
+}
+
+.cyber-card-gold {
+  background: rgba(10, 8, 2, 0.88);
+  border: 1px solid rgba(201, 168, 76, 0.15);
+  padding: 28px;
+  box-shadow:
+    0 0 30px rgba(201, 168, 76, 0.03),
+    inset 0 1px 0 rgba(201, 168, 76, 0.08),
+    inset 0 0 40px rgba(10, 8, 0, 0.4);
+  clip-path: polygon(
+    0 10px, 10px 0, calc(100% - 10px) 0, 100% 10px,
+    100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px)
+  );
+}
+
+/* ── Scanline overlay ── */
+.scanlines {
+  position: fixed;
+  inset: 0;
+  z-index: 97;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.015) 2px,
+    rgba(0, 0, 0, 0.015) 4px
+  );
+}
+
+/* ── Cyber button sweep ── */
+.cyber-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+.cyber-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(0,240,255,0.08), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.5s;
+}
+.cyber-btn:hover::before {
+  transform: translateX(100%);
+}
+.cyber-btn:hover {
+  background: rgba(0,240,255,0.08) !important;
+  border-color: rgba(0,240,255,0.4) !important;
+  box-shadow: 0 0 20px rgba(0,240,255,0.1), inset 0 0 20px rgba(0,240,255,0.03);
+}
+
+/* ── Cyber grid background ── */
+.cyber-grid {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(0,240,255,0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,240,255,0.012) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse at center, rgba(0,0,0,0.4) 0%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,0.4) 0%, transparent 70%);
+}
+
+/* ══════════════════════════════════════════
+   ATMOSPHERIC LAYERS
+   ══════════════════════════════════════════ */
+
+.atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse at var(--atmo-x1, 20%) var(--atmo-y1, 50%),
+      rgba(0, 20, 40, 0.8) 0%, transparent 70%
+    ),
+    radial-gradient(
+      ellipse at var(--atmo-x2, 80%) var(--atmo-y2, 20%),
+      rgba(20, 0, 35, 0.5) 0%, transparent 60%
+    ),
+    radial-gradient(
+      ellipse at var(--atmo-x3, 50%) var(--atmo-y3, 80%),
+      rgba(0, 15, 30, 0.4) 0%, transparent 50%
+    );
+  transition: background 0.3s ease;
+}
+
+.grain-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  mix-blend-mode: overlay;
+}
+
+.vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 35%, rgba(0, 0, 0, 0.75) 100%);
+}
+
+/* ══════════════════════════════════════════
+   ANIMATIONS
+   ══════════════════════════════════════════ */
+
+@keyframes particleDrift {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  8% { opacity: var(--p-opacity, 0.1); }
+  92% { opacity: var(--p-opacity, 0.1); }
+  100% {
+    transform: translateY(-105vh) translateX(calc(var(--p-drift, 15px)));
+    opacity: 0;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes cubeGlow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.9; }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes hudPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes lineExpand {
+  0% { transform: scaleX(0); }
+  100% { transform: scaleX(1); }
+}
+
+@keyframes fadeSlideUp {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(20px, -30px) scale(1.05); }
+  66% { transform: translate(-15px, 20px) scale(0.95); }
 }

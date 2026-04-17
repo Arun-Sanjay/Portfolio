@@ -1,0 +1,149 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg-base: #0A0A0A;
+  --color-bg-surface: #111111;
+  --color-bg-surface-2: #161616;
+  --color-bg-surface-3: #1C1C1C;
+  --color-border-subtle: rgba(255, 255, 255, 0.06);
+  --color-border-default: rgba(255, 255, 255, 0.10);
+  --color-border-hover: rgba(255, 255, 255, 0.18);
+  --color-text-primary: #F5F5F5;
+  --color-text-default: #C5C5C5;
+  --color-text-muted: #7A7A7A;
+  --color-text-subtle: #4A4A4A;
+  --color-accent: #4A9EFF;
+  --color-accent-dim: rgba(74, 158, 255, 0.15);
+  --color-highlight: #FFFFFF;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  background: #0A0A0A;
+  scroll-behavior: auto;
+}
+
+body {
+  background: #0A0A0A;
+  color: #C5C5C5;
+  font-family: var(--font-inter), sans-serif;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: rgba(74, 158, 255, 0.22);
+  color: #fff;
+}
+
+::-webkit-scrollbar {
+  width: 0;
+}
+
+:focus-visible {
+  outline: 2px solid rgba(74, 158, 255, 0.45);
+  outline-offset: 2px;
+}
+
+@keyframes grain {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  10% {
+    transform: translate(-5%, -10%);
+  }
+  20% {
+    transform: translate(-15%, 5%);
+  }
+  30% {
+    transform: translate(7%, -25%);
+  }
+  40% {
+    transform: translate(-5%, 25%);
+  }
+  50% {
+    transform: translate(-15%, 10%);
+  }
+  60% {
+    transform: translate(15%, 0);
+  }
+  70% {
+    transform: translate(0, 15%);
+  }
+  80% {
+    transform: translate(3%, 35%);
+  }
+  90% {
+    transform: translate(-10%, 10%);
+  }
+}
+
+@keyframes particleDrift {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100vh) translateX(20px);
+    opacity: 0;
+  }
+}
+
+@keyframes subtleFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes cubeGlow {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+}
+
+@keyframes hudPulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.25);
+  }
+}
+
+@keyframes blink {
+  0%,
+  45%,
+  100% {
+    opacity: 1;
+  }
+  55%,
+  95% {
+    opacity: 0.25;
+  }
+}
