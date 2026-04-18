@@ -1,18 +1,24 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from 'react';
 
-export function useIsMobile(breakpoint = 768): boolean {
+export function useIsMobile(): boolean {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const mq = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
-    setIsMobile(mq.matches);
+    const mql = window.matchMedia('(max-width: 767px)');
 
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, [breakpoint]);
+    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      setIsMobile(e.matches);
+    };
+
+    handleChange(mql);
+    mql.addEventListener('change', handleChange);
+
+    return () => {
+      mql.removeEventListener('change', handleChange);
+    };
+  }, []);
 
   return isMobile;
 }

@@ -1,27 +1,37 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { subscribeScrollProgress, getScrollProgress } from "@/lib/smoothScroll";
+import { useEffect, useRef, useState } from 'react';
+import { subscribeScrollProgress } from '@/lib/smoothScroll';
 
 export function useScrollProgress(): number {
   const [progress, setProgress] = useState(0);
-  const rafRef = useRef<number>(0);
-
-  const handleScroll = useCallback((p: number) => {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    rafRef.current = requestAnimationFrame(() => {
-      setProgress(p);
-    });
-  }, []);
+  const rafId = useRef<number>(0);
+  const latestProgress = useRef(0);
 
   useEffect(() => {
-    setProgress(getScrollProgress());
-    const unsub = subscribeScrollProgress(handleScroll);
+    let active = true;
+
+    const unsubscribe = subscribeScrollProgress((p) => {
+      latestProgress.current = p;
+
+      if (!rafId.current && active) {
+        rafId.current = requestAnimationFrame(() => {
+          if (active) {
+            setProgress(latestProgress.current);
+          }
+          rafId.current = 0;
+        });
+      }
+    });
+
     return () => {
-      unsub();
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      active = false;
+      unsubscribe();
+      if (rafId.current) {
+        cancelAnimationFrame(rafId.current);
+      }
     };
-  }, [handleScroll]);
+  }, []);
 
   return progress;
 }

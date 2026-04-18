@@ -1,83 +1,94 @@
-export const SKILLS = {
-  frontend: ["React Native", "Expo", "Next.js", "Tailwind CSS", "Framer Motion", "Three.js"],
-  backend: ["Python", "Node.js", "PostgreSQL", "Supabase"],
-  mobile: ["React Native", "Expo", "Zustand", "MMKV", "Reanimated"],
-  tools: ["Git", "Claude Code", "Vercel", "TypeScript"],
+export const SKILLS: Record<string, string[]> = {
+  frontend: ['React Native', 'Next.js', 'Tailwind CSS', 'Framer Motion', 'Three.js'],
+  backend: ['Python', 'Node.js', 'PostgreSQL', 'Supabase'],
+  mobile: ['Expo', 'Zustand', 'MMKV', 'Reanimated'],
+  tools: ['Git', 'Claude Code', 'Vercel', 'TypeScript'],
 };
-
-export const ALL_SKILLS_FLAT = [
-  "Python", "TypeScript", "PostgreSQL", "Next.js", "Tailwind CSS",
-  "Framer Motion", "Three.js", "React Native", "Expo", "Supabase",
-  "Zustand", "MMKV", "Reanimated", "Node.js", "Git",
-];
 
 export const PROJECTS = [
   {
-    title: "TITAN PROTOCOL",
-    subtitle: "Cross-Platform Productivity System",
+    id: 'titan',
+    number: '01',
+    title: 'TITAN PROTOCOL',
+    subtitle: 'Cross-Platform Productivity System',
     description:
-      "The flagship app of the Titan ecosystem. A gamified productivity system that turns discipline into measurable progress.",
-    highlights: [
-      "20 beta testers in co-builder program",
-      "Launched Android — March 2026",
-      "Co-builder model: users shape development for lifetime access",
-    ],
-    stack: ["React Native", "Expo", "Zustand", "MMKV", "Reanimated", "Supabase"],
-    scrollRange: { start: 0.44, end: 0.54 },
+      'The flagship app of the Titan ecosystem. A gamified productivity system that turns discipline into XP.',
+    year: '2026',
+    status: 'LAUNCHED',
+    statusColor: '#5CE0D2',
+    highlights: ['20+ beta testers', 'Android launched March 2026', 'Gamified XP system'],
+    stack: ['React Native', 'Expo', 'Zustand', 'MMKV', 'Reanimated', 'Supabase'],
+    theme: 'titan',
   },
   {
-    title: "CAMPUSIQ",
-    subtitle: "AI-Powered Academic & Placement Platform",
+    id: 'campusiq',
+    number: '02',
+    title: 'CAMPUSIQ',
+    subtitle: 'AI-Powered Academic & Placement Platform',
     description:
-      "Built as an RVCE experiential learning project. An intelligent system that personalizes learning paths and prepares students for placements.",
+      'RVCE project using pgvector RAG, Dijkstra\'s algorithm, Whisper API, and MediaPipe for an end-to-end academic platform.',
+    year: '2025\u20132026',
+    status: 'IN DEVELOPMENT',
+    statusColor: '#FFB800',
     highlights: [
-      "pgvector RAG for intelligent content retrieval",
-      "Dijkstra's algorithm for shortest learning path",
-      "Whisper API voice interaction + MediaPipe processing",
-      "Mock interview engine with AI feedback",
+      'Peer team under Dr. Krishnappa H K',
+      'pgvector RAG pipeline',
+      'Whisper + MediaPipe integration',
+      'Dijkstra\'s pathfinding',
     ],
-    stack: ["Next.js", "Python", "PostgreSQL", "pgvector", "Whisper API", "MediaPipe"],
-    team: "6-person team under Dr. Krishnappa H K",
-    scrollRange: { start: 0.54, end: 0.62 },
+    stack: ['Next.js', 'Python', 'PostgreSQL', 'pgvector', 'Whisper', 'MediaPipe'],
+    theme: 'campus',
   },
   {
-    title: "GENX BUILDS",
-    subtitle: "Custom PC Building Business",
+    id: 'genx',
+    number: '03',
+    title: 'GENX BUILDS',
+    subtitle: 'Custom PC Building Business',
     description:
-      "A real business, not a side project. Commission-based custom PC building operation sourcing components from SP Road, Bangalore.",
+      'Commission-based custom PC building from SP Road, Bangalore. Lead generation, sourcing, assembly, and delivery.',
+    year: '2025\u20132026',
+    status: 'OPERATIONAL',
+    statusColor: '#FF6B1A',
     highlights: [
-      "Independent brand via Smart Gaming Store partnership",
-      "Online lead generation → price negotiation → fulfillment",
-      "Full supply chain management across component markets",
-      "Real revenue from real customers",
+      'SP Road sourcing network',
+      'Partnership with Smart Gaming Store',
+      'End-to-end build service',
+      'Commission-based model',
     ],
     stack: [],
-    model: "Lead Gen → Negotiate → Source → Build → Deliver",
-    scrollRange: { start: 0.62, end: 0.7 },
+    tags: ['LOGISTICS', 'SOURCING', 'CUSTOM BUILDS'],
+    theme: 'genx',
   },
 ] as const;
 
 export const ACHIEVEMENTS = [
   {
-    title: "META PYTORCH × HUGGING FACE",
-    subtitle: "OpenEnv Hackathon — Finalist",
+    title: 'META PYTORCH \u00d7 HUGGING FACE',
+    subtitle: 'OpenEnv Hackathon \u2014 Finalist',
     description:
-      "Selected for the in-person finale at Scaler SST Bangalore. Built DispatchPulse — a reinforcement learning environment for emergency 911 dispatch coordination using clinical survival curves as the reward function.",
-    journey: "Initial rejection → 2-day extension → Accepted Round 2 → Finals",
-    date: "April 25–26, 2026 · Bangalore",
+      'Built DispatchPulse \u2014 a reinforcement learning environment for 911 dispatch coordination using clinical survival curves as the reward function.',
+    journey: 'Applied \u2192 Accepted \u2192 Finals',
+    date: 'April 25\u201326, 2026 \u00b7 Scaler SST Bangalore',
+    stats: ['70K+ APPLIED', '2K SELECTED'],
   },
 ];
 
 export const EDUCATION = {
-  institution: "RVCE Bangalore",
-  degree: "B.Tech Computer Science (Cyber Security)",
-  semester: "4th Semester",
-  years: "2024–2028",
-  fullName: "Rashtreeya Vidyalaya College of Engineering",
+  institution: 'RVCE Bangalore',
+  fullName: 'Rashtreeya Vidyalaya College of Engineering',
+  degree: 'B.Tech Computer Science (Cyber Security)',
+  semester: '4th Semester',
+  years: '2024\u20132028',
 };
 
 export const CONTACT = {
-  github: "https://github.com/Arun-Sanjay",
-  email: "",
-  linkedin: "",
+  github: 'https://github.com/Arun-Sanjay',
+  email: '',
+  linkedin: '',
+  phone: '6360363095',
+  location: 'Bangalore, India',
+  timezone: 'IST (UTC+5:30)',
 };
+
+export const TECH_STRIP =
+  'PYTHON \u00b7 TYPESCRIPT \u00b7 REACT NATIVE \u00b7 NEXT.JS \u00b7 SUPABASE \u00b7 THREE.JS \u00b7 FRAMER MOTION \u00b7 GSAP \u00b7 TAILWIND \u00b7 POSTGRES';
