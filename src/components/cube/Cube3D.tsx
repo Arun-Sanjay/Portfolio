@@ -54,7 +54,10 @@ function buildFaceData(workId: string) {
 }
 
 export default function Cube3D() {
-  const motion = useCubeMotion();
+  // useCubeMotion hands back ref callbacks. Its RAF loop writes transforms
+  // directly to the DOM nodes, so Cube3D doesn't re-render per frame —
+  // only when chapter data or interaction state changes.
+  const { wrapperRef, innerRef } = useCubeMotion();
   const { data } = useCubeChapter(); // drives ExpandedView content + face swap
   const accent = data.accent;
   const faceData = buildFaceData(data.id);
@@ -122,24 +125,29 @@ export default function Cube3D() {
 
   return (
     <>
-      {/* Fixed wrapper — content-relative px offset from viewport center */}
+      {/* Fixed wrapper — useCubeMotion writes `transform: translate(...)`
+          here every frame. No inline transform in JSX so React doesn't
+          fight the hook. */}
       <div
+        ref={wrapperRef}
         aria-hidden={hideCube}
         className="fixed select-none"
         style={{
           top: '50%',
           left: '50%',
-          transform: `translate(calc(-50% + ${motion.x}px), calc(-50% + ${motion.y}px))`,
           width: SIZE,
           height: SIZE,
-          pointerEvents: hideCube || motion.opacity < 0.2 ? 'none' : 'auto',
-          opacity: motion.opacity,
+          pointerEvents: hideCube ? 'none' : 'auto',
           zIndex: 5,
-          willChange: 'transform, opacity',
+          willChange: 'transform',
         }}
       >
-        {/* Ambient halo — much softer than before */}
+        {/* Ambient halo — wide, accent-tinted wash. Removed filter:blur
+            (large blur radii are the single biggest mobile-GPU tax); the
+            radial gradient's natural falloff carries the softness at a
+            fraction of the cost. */}
         <div
+          aria-hidden="true"
           style={{
             position: 'absolute',
             top: '50%',
@@ -148,14 +156,14 @@ export default function Cube3D() {
             width: SIZE * 2.4,
             height: SIZE * 2.4,
             borderRadius: '50%',
-            background: `radial-gradient(circle, ${hexToRgba(accent, 0.04)} 0%, transparent 55%)`,
-            filter: 'blur(100px)',
+            background: `radial-gradient(circle, ${hexToRgba(accent, 0.12)} 0%, transparent 55%)`,
             pointerEvents: 'none',
             transition: 'background 0.9s ease, opacity 0.4s ease',
-            opacity: shatterActive ? 0.3 : 0.9,
+            opacity: shatterActive ? 0.3 : 0.75,
           }}
         />
         <div
+          aria-hidden="true"
           style={{
             position: 'absolute',
             top: '50%',
@@ -164,12 +172,11 @@ export default function Cube3D() {
             width: SIZE * 1.3,
             height: SIZE * 1.3,
             borderRadius: '50%',
-            background: `radial-gradient(circle, ${hexToRgba(accent, 0.09)} 0%, transparent 72%)`,
-            filter: 'blur(48px)',
+            background: `radial-gradient(circle, ${hexToRgba(accent, 0.22)} 0%, transparent 70%)`,
             pointerEvents: 'none',
             transition: 'background 0.9s ease, opacity 0.4s ease',
             animation: 'cubeGlow 5s ease-in-out infinite',
-            opacity: shatterActive ? 0.25 : 1,
+            opacity: shatterActive ? 0.25 : 0.9,
           }}
         />
 
@@ -200,12 +207,16 @@ export default function Cube3D() {
               pointerEvents: phase === 'closed' ? 'auto' : 'none',
             }}
           >
+            {/* innerRef: useCubeMotion writes the scale+rotate transform
+                to this node every frame. React must NOT include `transform`
+                in this element's style prop — it would clobber the ref
+                writes on the next render. */}
             <div
+              ref={innerRef}
               style={{
                 width: SIZE,
                 height: SIZE,
                 transformStyle: 'preserve-3d',
-                transform: `scale(${motion.scale}) rotateX(${motion.rotX}deg) rotateY(${motion.rotY}deg) rotateZ(${motion.rotZ}deg)`,
                 willChange: 'transform',
               }}
             >
@@ -268,62 +279,64 @@ export default function Cube3D() {
             />
           )}
         </div>
-      </div>
 
-      {/* Tick tag — small identifier that floats BELOW the cube as it ticks
-          through work slots. Vertically below avoids the tight horizontal
-          space between the project cards and the cube. */}
-      <div
-        aria-hidden="true"
-        className="fixed select-none hidden lg:flex"
-        style={{
-          top: '50%',
-          left: '50%',
-          transform: `translate(calc(-50% + ${motion.x}px), calc(-50% + ${motion.y}px + 170px))`,
-          opacity: !hideCube && isWorkFace ? motion.opacity : 0,
-          transition: 'opacity 0.28s ease',
-          pointerEvents: 'none',
-          zIndex: 4,
-          willChange: 'transform, opacity',
-          fontFamily: 'var(--font-jetbrains), monospace',
-          alignItems: 'center',
-          gap: 10,
-          padding: '8px 14px',
-          borderRadius: 999,
-          background: 'rgba(10,10,10,0.72)',
-          border: `1px solid ${accent}55`,
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-        }}
-      >
-        <span
+        {/* Tick tag — nested inside the wrapper so it inherits the
+            wrapper's translate for free (no duplicated transform read).
+            Hidden below lg; the cube-as-HUD carries the meaning on smaller
+            viewports without the extra pill. */}
+        <div
+          aria-hidden="true"
+          className="hidden lg:flex select-none"
           style={{
-            width: 6,
-            height: 6,
-            borderRadius: '50%',
-            background: accent,
-            boxShadow: `0 0 10px ${accent}`,
-          }}
-        />
-        <span
-          style={{
-            fontSize: 10,
-            letterSpacing: '0.28em',
-            color: '#F5F5F5',
-            fontWeight: 500,
+            position: 'absolute',
+            top: `calc(50% + 170px)`,
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            opacity: !hideCube && isWorkFace ? 1 : 0,
+            transition: 'opacity 0.28s ease',
+            pointerEvents: 'none',
+            zIndex: 4,
+            fontFamily: 'var(--font-jetbrains), monospace',
+            alignItems: 'center',
+            gap: 10,
+            padding: '8px 14px',
+            borderRadius: 999,
+            background: 'rgba(10,10,10,0.72)',
+            border: `1px solid ${accent}55`,
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            whiteSpace: 'nowrap',
           }}
         >
-          {data.title}
-        </span>
-        <span
-          style={{
-            fontSize: 9,
-            letterSpacing: '0.22em',
-            color: '#7A7A7A',
-          }}
-        >
-          {data.subtitle}
-        </span>
+          <span
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              background: accent,
+              boxShadow: `0 0 10px ${accent}`,
+            }}
+          />
+          <span
+            style={{
+              fontSize: 10,
+              letterSpacing: '0.28em',
+              color: '#F5F5F5',
+              fontWeight: 500,
+            }}
+          >
+            {data.title}
+          </span>
+          <span
+            style={{
+              fontSize: 9,
+              letterSpacing: '0.22em',
+              color: '#7A7A7A',
+            }}
+          >
+            {data.subtitle}
+          </span>
+        </div>
       </div>
 
       {mounted &&

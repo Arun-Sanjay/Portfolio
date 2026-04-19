@@ -147,18 +147,3 @@ body {
     opacity: 0.25;
   }
 }
-
-/* MobileCube idle sway — compositor-only, runs cheap on phones. Kept small
-   in amplitude so it reads as breathing, not wobbling. */
-@keyframes mobileCubeSway {
-  0%,
-  100% {
-    transform: rotateY(-4deg) rotateX(2deg);
-  }
-  33% {
-    transform: rotateY(5deg) rotateX(-3deg);
-  }
-  66% {
-    transform: rotateY(-2deg) rotateX(4deg);
-  }
-}

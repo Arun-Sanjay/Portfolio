@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import type { CubeChapterData } from '@/hooks/useCubeChapter';
 
 const SIZE = 300;
@@ -15,7 +16,13 @@ const mono: React.CSSProperties = {
   fontFamily: 'var(--font-jetbrains), monospace',
 };
 
-export default function HudFace({ data }: { data: CubeChapterData }) {
+// Memoised — CHAPTER_HUD entries are module-level constants, so the data
+// prop reference is stable across Cube3D re-renders that don't actually
+// change the chapter. Without this, each face repaints its SVG grid and
+// corner brackets 60× per second under the old useCubeMotion setState
+// loop (and still occasionally under the new ref-based loop whenever
+// other state changes in Cube3D).
+function HudFaceImpl({ data }: { data: CubeChapterData }) {
   const { accent, number, title, subtitle, details } = data;
 
   return (
@@ -224,3 +231,6 @@ export default function HudFace({ data }: { data: CubeChapterData }) {
     </div>
   );
 }
+
+const HudFace = memo(HudFaceImpl);
+export default HudFace;

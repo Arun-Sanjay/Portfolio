@@ -1,36 +1,28 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { subscribeScrollProgress } from '@/lib/smoothScroll';
 
 // ---------------------------------------------------------------------------
 // Cube motion — viewport-anchored, scroll-driven choreography spline.
 //
-// DESIGN INTENT (per user spec, seventh pass — "loader + immediate sweep"):
-//   • Boot: the app shows a cyberpunk loading screen first. While the
-//     loader is up, the cube sits huge and centred (scale ~3.5, xFrac 0)
-//     hidden behind the loader — `awaitingIntro` is true and the scroll
-//     spline is ignored. When the loader starts fading, `startCubeIntro`
-//     fires. The cube then eases from (0, 3.5) → (hero pose) over
-//     INTRO_DURATION_MS while the Hero copy staggers in. Effect: cube
-//     "emerges" by shrinking from screen-fill to its anchor position.
-//   • Hero: once the intro completes, the cube sits on the RIGHT side
-//     (xFrac +0.55, scale 1.10). The MOMENT the user scrolls it begins
-//     sweeping LEFT — there is NO dwell at the right. There's no
-//     `hero-hold` pose; the spline interpolates directly from `hero`
-//     (xFrac +0.55 at p=0) to `stack-in` (xFrac −0.55 at p=0.13), so
-//     even a single pixel of scroll produces motion.
-//   • Stack/Work: cube stays vertically centred. Horizontal storytelling
-//     axis only.
-//   • Work: three dedicated sticky sub-frames (Titan / CampusIQ / GenX);
-//     cube holds on the right, face swaps at each crossfade centre so
-//     the face change and the card crossfade read as one event.
-//   • Arena: cube migrates back to centre and grows BIG (~1.30) to dominate
-//     the final-act frame — but small enough that the surrounding text
-//     does not collide with it.
-//   • Signal: cube STAYS LARGE (~1.40, slightly bigger than Arena because
-//     Signal has more breathing room) and lands on the right while the
-//     contact text packs into the left column.
+// PERF NOTE (2026-04-19): this hook used to call `setState` every RAF tick,
+// which triggered a full Cube3D reconciliation 60× per second. Desktop
+// shrugged it off; mid-range phones choked. The hook now writes transforms
+// directly to two refs (`wrapperRef` for the outer translate, `innerRef`
+// for the inner scale/rotate). React only renders Cube3D on chapter
+// boundaries via useCubeChapter — ~5 times per page scroll. Combined with
+// memoised HudFace and unfiltered halos, this brings the cube to full
+// 60fps on phones while keeping the full desktop choreography.
+//
+// DESIGN INTENT (unchanged):
+//   • Boot: loader covers a huge centred cube (scale 3.6). When the loader
+//     starts fading, `startCubeIntro` fires and the cube blends to the hero
+//     pose over INTRO_DURATION_MS.
+//   • Hero → Stack → Work → Arena → Signal: spline drives x-sweep, scale,
+//     and which face comes forward. See SPLINE below.
+//   • Below 768px the cube's scale is multiplied by 0.55 so the same
+//     choreography fits a phone viewport without clipping.
 //
 // Section heights (px):
 //   Hero    100vh   →  0    – 0.09
@@ -45,6 +37,9 @@ import { subscribeScrollProgress } from '@/lib/smoothScroll';
 
 const CONTENT_MAX = 1440;
 const CONTENT_PAD = 48;
+const CUBE_SIZE_PX = 300;
+const MOBILE_BREAKPOINT = 768;
+const MOBILE_SCALE_FACTOR = 0.55;
 
 interface Pose {
   id: string;
@@ -56,36 +51,15 @@ interface Pose {
 }
 
 const SPLINE: Pose[] = [
-  // Hero — anchored on the RIGHT (xFrac=+0.78) at first paint, slightly
-  // oversized (scale 1.15). No vertical offset, no bottom-bias. The cube
-  // begins sweeping LEFT the moment the user scrolls — the old
-  // `hero-hold` pose that kept it parked at the right through p≤0.07 is
-  // gone, so the interpolator goes straight from `hero` (xFrac +0.78)
-  // to `stack-in` (xFrac −0.55) across 0.00 → 0.13. That matches Stack's
-  // text entrance window (also now starting at 0) — cube leaving its
-  // hero slot and text sliding in from the left read as one exchange.
   { id: 'hero-pre',    progress: -0.05, xFrac:  0.65, yPx:   0, scale: 1.15, face: 0 },
   { id: 'hero',        progress:  0.00, xFrac:  0.65, yPx:   0, scale: 1.15, face: 0 },
-  // Rightward → leftward sweep into Stack. Shrinks 1.15 → 0.92 so the
-  // cube "settles down" into its Stack slot as it crosses the viewport.
   { id: 'stack-in',    progress:  0.13, xFrac: -0.55, yPx:   0, scale: 0.92, face: 1 },
-  // Stack DWELL — cube on left, all skill columns visible together.
   { id: 'stack',       progress:  0.25, xFrac: -0.55, yPx:   0, scale: 0.92, face: 1 },
-  // Stack → Work-titan: cube swings to the RIGHT, scales up a touch (each
-  // project gets a dedicated full-frame and the cube is the visual lock on
-  // the right side, so it can carry a bit more presence).
   { id: 'work-titan',  progress:  0.34, xFrac:  0.55, yPx:   0, scale: 1.00, face: 2 },
-  // Work tick poses — cube X stays put, face swaps via useCubeChapter so
-  // the cube advertises Titan → CampusIQ → GenX in sequence.
   { id: 'work-campus', progress:  0.45, xFrac:  0.55, yPx:   0, scale: 1.00, face: 2 },
   { id: 'work-genx',   progress:  0.56, xFrac:  0.55, yPx:   0, scale: 1.00, face: 2 },
-  // Work → Arena: cube migrates back to CENTRE and grows. Scale tuned so
-  // it dominates without colliding with the left/right narrative columns.
   { id: 'arena-in',    progress:  0.66, xFrac:  0.00, yPx:   0, scale: 1.20, face: 3 },
   { id: 'arena',       progress:  0.74, xFrac:  0.00, yPx:   0, scale: 1.30, face: 3 },
-  // Arena → Signal: cube STAYS LARGE (slightly bigger than Arena, since
-  // Signal has more breathing room) and shifts to the RIGHT so the contact
-  // panel takes the left column.
   { id: 'signal-in',   progress:  0.85, xFrac:  0.28, yPx:   0, scale: 1.35, face: 4 },
   { id: 'signal',      progress:  0.94, xFrac:  0.28, yPx:   0, scale: 1.40, face: 4 },
   { id: 'signal-out',  progress:  1.05, xFrac:  0.28, yPx:   0, scale: 1.40, face: 4 },
@@ -101,7 +75,7 @@ function catmullRom(
   p1: number,
   p2: number,
   p3: number,
-  t: number
+  t: number,
 ): number {
   const t2 = t * t;
   const t3 = t2 * t;
@@ -114,8 +88,6 @@ function catmullRom(
   );
 }
 
-// Soft ease — smoothstep applied to the local segment parameter so we
-// dwell near each control point and sweep briskly through the middle.
 function smoothstep(t: number): number {
   const x = Math.max(0, Math.min(1, t));
   return x * x * (3 - 2 * x);
@@ -127,7 +99,6 @@ function interpolate(progress: number): {
   scale: number;
   face: 0 | 1 | 2 | 3 | 4;
 } {
-  // Find segment [i, i+1] that contains progress.
   let i = 0;
   for (let k = 1; k < SPLINE.length; k++) {
     if (progress <= SPLINE[k].progress) {
@@ -146,7 +117,6 @@ function interpolate(progress: number): {
   const tRaw = Math.max(0, Math.min(1, (progress - p1.progress) / segLen));
   const t = smoothstep(tRaw);
 
-  // Pick the face of whichever anchor we're closer to.
   const face = tRaw < 0.5 ? p1.face : p2.face;
 
   return {
@@ -162,27 +132,12 @@ function computeContentWidth(viewportW: number): number {
   return Math.max(0, usable - 2 * CONTENT_PAD);
 }
 
-export interface CubeMotion {
-  x: number;
-  y: number;
-  scale: number;
-  opacity: number;
-  rotY: number;
-  rotX: number;
-  rotZ: number;
-  faceIndex: 0 | 1 | 2 | 3 | 4;
-}
-
 // ---------------------------------------------------------------------------
 // Intro override — module-level so page.tsx can fire `startCubeIntro()`
 // exactly when the loading screen begins its fade-out. Until that call,
 // `awaitingIntro` is true and the cube is forced to its pre-intro pose
-// (huge, centred, scale INTRO_START_SCALE) so the very first frame after
-// the loader lifts is the "emerging" state rather than the hero pose.
-// During the intro window, the tick loop blends from that pre-intro pose
-// toward the scroll-driven spline pose on an ease-out curve — so even
-// if the user immediately scrolls, the emergence and the scroll handoff
-// are smooth.
+// (huge, centred) so the very first frame after the loader lifts is the
+// "emerging" state rather than the hero pose.
 // ---------------------------------------------------------------------------
 const INTRO_DURATION_MS = 1100;
 const INTRO_START_SCALE = 3.6;
@@ -202,26 +157,20 @@ function introEase(t: number): number {
   return 1 - Math.pow(1 - x, 3);
 }
 
-export function useCubeMotion(): CubeMotion {
-  const first = interpolate(0);
-  const [viewportW, setViewportW] = useState(
-    typeof window !== 'undefined' ? window.innerWidth : 1440
-  );
+export interface CubeMotionHandle {
+  /** Attach to the fixed outer wrapper — the hook writes translate here. */
+  wrapperRef: (node: HTMLElement | null) => void;
+  /** Attach to the preserve-3d element — the hook writes scale+rotate here. */
+  innerRef: (node: HTMLElement | null) => void;
+}
 
-  // Seed with the pre-intro pose (huge, centred). Loader sits on top of
-  // the cube so this state is invisible until `startCubeIntro()` fires
-  // and the loader fades — at which point the blend in tick() animates
-  // out of this pose toward the scroll-driven spline.
-  const [state, setState] = useState<CubeMotion>({
-    x: 0,
-    y: 0,
-    scale: INTRO_START_SCALE,
-    opacity: 1,
-    rotY: FACE_ROT_Y[first.face],
-    rotX: FACE_ROT_X[first.face],
-    rotZ: 0,
-    faceIndex: first.face,
-  });
+export function useCubeMotion(): CubeMotionHandle {
+  const first = interpolate(0);
+  const wrapperEl = useRef<HTMLElement | null>(null);
+  const innerEl = useRef<HTMLElement | null>(null);
+  const viewportW = useRef<number>(
+    typeof window !== 'undefined' ? window.innerWidth : 1440,
+  );
 
   const progress = useRef(0);
   const rotY = useRef(FACE_ROT_Y[first.face]);
@@ -231,14 +180,14 @@ export function useCubeMotion(): CubeMotion {
   const targetRotX = useRef(FACE_ROT_X[first.face]);
   const currentFace = useRef<0 | 1 | 2 | 3 | 4>(first.face);
   const prevTime = useRef(
-    typeof performance !== 'undefined' ? performance.now() : 0
+    typeof performance !== 'undefined' ? performance.now() : 0,
   );
   const prevProgress = useRef(0);
   const raf = useRef(0);
 
   useEffect(() => {
     const onResize = () => {
-      setViewportW(window.innerWidth);
+      viewportW.current = window.innerWidth;
     };
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
@@ -266,13 +215,12 @@ export function useCubeMotion(): CubeMotion {
     prevProgress.current = p;
 
     const pose = interpolate(p);
-    const contentW = computeContentWidth(viewportW);
+    const vw = viewportW.current;
+    const contentW = computeContentWidth(vw);
 
-    // Intro override: before `startCubeIntro()` fires, hold the cube at
-    // the huge-centred pre-intro pose (hidden under the loader). After
-    // it fires, blend from that pose toward the scroll-driven pose over
-    // INTRO_DURATION_MS on an ease-out curve. Once the window elapses,
-    // we fall straight through to the scroll-driven pose.
+    // Intro override — before startCubeIntro() fires, hold the pre-intro
+    // pose (hidden under the loader). After it fires, blend from that
+    // pose toward the scroll-driven pose over INTRO_DURATION_MS.
     let scaleOut = pose.scale;
     let xFracOut = pose.xFrac;
     if (awaitingIntro) {
@@ -289,13 +237,15 @@ export function useCubeMotion(): CubeMotion {
       }
     }
 
+    // Mobile scale — keep the spline's choreography, just scaled down so
+    // the 300px base cube fits a phone viewport. The x-clamp below adapts
+    // to the smaller visual footprint naturally.
+    if (vw < MOBILE_BREAKPOINT) scaleOut *= MOBILE_SCALE_FACTOR;
+
     // Viewport-aware clamp so the cube never clips the window edge on
-    // narrower viewports (the content column can be wider than the
-    // viewport when padding is included). Keep a small margin so the
-    // ambient halo isn't cut off either. During the intro's scale-3.6
-    // phase the clamp drops to zero (cube must stay dead-centred).
-    const cubeVisualHalf = (300 * scaleOut) / 2;
-    const maxOffset = Math.max(0, viewportW / 2 - cubeVisualHalf - 24);
+    // narrow viewports.
+    const cubeVisualHalf = (CUBE_SIZE_PX * scaleOut) / 2;
+    const maxOffset = Math.max(0, vw / 2 - cubeVisualHalf - 24);
     const xRaw = (contentW / 2) * xFracOut;
     const x = Math.max(-maxOffset, Math.min(maxOffset, xRaw));
 
@@ -303,7 +253,8 @@ export function useCubeMotion(): CubeMotion {
     if (pose.face !== currentFace.current) {
       currentFace.current = pose.face;
       const nextY = FACE_ROT_Y[pose.face];
-      const delta = ((nextY - (targetRotY.current % 360)) + 540) % 360 - 180;
+      const delta =
+        (((nextY - (targetRotY.current % 360)) + 540) % 360) - 180;
       targetRotY.current += delta;
       targetRotX.current = FACE_ROT_X[pose.face];
     }
@@ -319,24 +270,30 @@ export function useCubeMotion(): CubeMotion {
     const ambientY = Math.sin(now * 0.00028) * 2;
     const ambientX = Math.sin(now * 0.00022) * 1.5;
 
-    setState({
-      x,
-      y: pose.yPx,
-      scale: scaleOut,
-      opacity: 1,
-      rotY: rotY.current + ambientY,
-      rotX: rotX.current + ambientX,
-      rotZ: rotZ.current,
-      faceIndex: pose.face,
-    });
+    // Direct DOM writes — no React reconciliation per frame.
+    if (wrapperEl.current) {
+      wrapperEl.current.style.transform =
+        `translate(calc(-50% + ${x}px), calc(-50% + ${pose.yPx}px))`;
+    }
+    if (innerEl.current) {
+      innerEl.current.style.transform =
+        `scale(${scaleOut}) rotateX(${rotX.current + ambientX}deg) rotateY(${rotY.current + ambientY}deg) rotateZ(${rotZ.current}deg)`;
+    }
 
     raf.current = requestAnimationFrame(tick);
-  }, [viewportW]);
+  }, []);
 
   useEffect(() => {
     raf.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf.current);
   }, [tick]);
 
-  return state;
+  const wrapperRef = useCallback((node: HTMLElement | null) => {
+    wrapperEl.current = node;
+  }, []);
+  const innerRef = useCallback((node: HTMLElement | null) => {
+    innerEl.current = node;
+  }, []);
+
+  return { wrapperRef, innerRef };
 }
