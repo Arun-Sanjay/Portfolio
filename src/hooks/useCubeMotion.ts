@@ -289,11 +289,6 @@ export function useCubeMotion(): CubeMotion {
       }
     }
 
-    // Below 768px the cube becomes ambience rather than a hero prop — shrink
-    // it so the 300×300 base doesn't dominate a single-column layout. The
-    // z-index drop to 1 (see Cube3D) keeps it behind the content.
-    if (viewportW < 768) scaleOut *= 0.55;
-
     // Viewport-aware clamp so the cube never clips the window edge on
     // narrower viewports (the content column can be wider than the
     // viewport when padding is included). Keep a small margin so the

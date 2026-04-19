@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { initSmoothScroll } from '@/lib/smoothScroll';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { startCubeIntro } from '@/hooks/useCubeMotion';
 
 /* Atmosphere */
@@ -28,10 +29,17 @@ import Signal from '@/components/sections/Signal';
 /* Projects (expanded overlay portal) */
 import ExpandedRouter from '@/components/projects/ExpandedRouter';
 
-/* Cube — CSS 3D, scroll-driven, chapter-themed */
+/* Cube — CSS 3D, scroll-driven, chapter-themed. Desktop gets the full
+   sweeping cube with scroll-driven spline and shatter/expanded-view;
+   mobile gets a lightweight corner HUD via MobileCube (zero per-frame JS,
+   compositor-only transitions) so the phone stays smooth. */
 const Cube3D = dynamic(() => import('@/components/cube/Cube3D'), { ssr: false });
+const MobileCube = dynamic(() => import('@/components/cube/MobileCube'), {
+  ssr: false,
+});
 
 export default function Home() {
+  const isMobile = useIsMobile();
   // `ready` flips when the LoadingScreen begins its fade-out. That single
   // event triggers three things in lock-step: loader fades, cube emerges
   // from its huge-centred pre-intro pose, and the hero text staggers in.
@@ -77,10 +85,10 @@ export default function Home() {
         onComplete={handleLoaderGone}
       />
 
-      {/* Persistent HUD cube. Below 768px Cube3D shrinks itself and drops
-          behind content so it reads as ambience instead of occluding the
-          single-column layout. */}
-      <Cube3D />
+      {/* Persistent HUD cube. Mobile gets a separate lightweight component
+          that avoids the desktop cube's per-frame setState loop and
+          large blur filters — see MobileCube for the rationale. */}
+      {isMobile ? <MobileCube /> : <Cube3D />}
 
       {/* Project themed environments (portal to body) */}
       <ExpandedRouter />
