@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { initSmoothScroll } from '@/lib/smoothScroll';
-import { useIsMobile } from '@/hooks/useIsMobile';
 import { startCubeIntro } from '@/hooks/useCubeMotion';
 
 /* Atmosphere */
@@ -33,7 +32,6 @@ import ExpandedRouter from '@/components/projects/ExpandedRouter';
 const Cube3D = dynamic(() => import('@/components/cube/Cube3D'), { ssr: false });
 
 export default function Home() {
-  const isMobile = useIsMobile();
   // `ready` flips when the LoadingScreen begins its fade-out. That single
   // event triggers three things in lock-step: loader fades, cube emerges
   // from its huge-centred pre-intro pose, and the hero text staggers in.
@@ -79,8 +77,10 @@ export default function Home() {
         onComplete={handleLoaderGone}
       />
 
-      {/* Persistent HUD cube — hidden on mobile */}
-      {!isMobile && <Cube3D />}
+      {/* Persistent HUD cube. Below 768px Cube3D shrinks itself and drops
+          behind content so it reads as ambience instead of occluding the
+          single-column layout. */}
+      <Cube3D />
 
       {/* Project themed environments (portal to body) */}
       <ExpandedRouter />

@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { AnimatePresence } from 'framer-motion';
 import { useCubeMotion } from '@/hooks/useCubeMotion';
 import { useCubeChapter, CHAPTER_HUD } from '@/hooks/useCubeChapter';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import HudFace from './HudFace';
 import ExpandedView from './ExpandedView';
 import Shatter from './Shatter';
@@ -56,6 +57,7 @@ function buildFaceData(workId: string) {
 export default function Cube3D() {
   const motion = useCubeMotion();
   const { data } = useCubeChapter(); // drives ExpandedView content + face swap
+  const isMobile = useIsMobile();
   const accent = data.accent;
   const faceData = buildFaceData(data.id);
 
@@ -122,9 +124,12 @@ export default function Cube3D() {
 
   return (
     <>
-      {/* Fixed wrapper — content-relative px offset from viewport center */}
+      {/* Fixed wrapper — content-relative px offset from viewport center.
+          On mobile we drop zIndex below the content layer (z-[2]) so the
+          cube reads as ambience, and disable pointer events entirely
+          since the shatter / expanded-view flow is desktop-only. */}
       <div
-        aria-hidden={hideCube}
+        aria-hidden={hideCube || isMobile}
         className="fixed select-none"
         style={{
           top: '50%',
@@ -132,9 +137,10 @@ export default function Cube3D() {
           transform: `translate(calc(-50% + ${motion.x}px), calc(-50% + ${motion.y}px))`,
           width: SIZE,
           height: SIZE,
-          pointerEvents: hideCube || motion.opacity < 0.2 ? 'none' : 'auto',
+          pointerEvents:
+            isMobile || hideCube || motion.opacity < 0.2 ? 'none' : 'auto',
           opacity: motion.opacity,
-          zIndex: 5,
+          zIndex: isMobile ? 1 : 5,
           willChange: 'transform, opacity',
         }}
       >
@@ -188,16 +194,18 @@ export default function Cube3D() {
             type="button"
             onClick={open}
             aria-label={`Expand chapter ${data.number} — ${data.title}`}
+            tabIndex={isMobile ? -1 : 0}
             style={{
               position: 'absolute',
               inset: 0,
               background: 'transparent',
               border: 0,
               padding: 0,
-              cursor: phase === 'closed' ? 'pointer' : 'default',
+              cursor: !isMobile && phase === 'closed' ? 'pointer' : 'default',
               opacity: phase === 'closed' ? 1 : 0,
               transition: 'opacity 0.2s ease',
-              pointerEvents: phase === 'closed' ? 'auto' : 'none',
+              pointerEvents:
+                isMobile || phase !== 'closed' ? 'none' : 'auto',
             }}
           >
             <div
